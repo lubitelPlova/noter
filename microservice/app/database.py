@@ -3,7 +3,7 @@ from typing_extensions import Annotated
 
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import (
-    create_async_engine, async_sessionmaker, AsyncAttrs
+    create_async_engine, async_sessionmaker, AsyncAttrs, AsyncSession
 )
 from sqlalchemy.orm import (
     DeclarativeBase, declared_attr, Mapped, mapped_column
@@ -37,3 +37,14 @@ class Base(AsyncAttrs, DeclarativeBase):
 
     created_at: Mapped[created_at]
     updated_at: Mapped[updated_at]
+
+
+async def get_async_session() -> AsyncSession:
+    async with async_session_maker() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
